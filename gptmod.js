@@ -103,13 +103,3 @@ exports.chatGpt = async function(query){
       console.error(e);
     }
   }
-/******************************************************************
- * 　テスト用
- * 
- */
-  async function testGpt(){
-    var agent = {queryText: 'なぜ早朝にモーニングセミナーを行うのですか'};
-    const result = await chatGpt(agent);
-    //console.log('\nTEST回答\n' + result);
-  }
-  //testGpt();
