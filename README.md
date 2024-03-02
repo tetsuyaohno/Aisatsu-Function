@@ -43,12 +43,49 @@
   <li>Chat-GPTにより、純粋倫理のエッセンスが効いた挨拶文が生成される</li>
 </ol>
 
-<h3>使っている技術</h3><p>
-挨拶文の生成は、GPT-3.5-turboを使用しています。<br>
-埋め込み（embedding）には、text-embedding-3-smallを使用しています。<br>
-関数はGoogle Cloud Functions上でOpenAI API を使用して作られています。<br>
-コードはnode.js 18で書いています。<br>
-エッセンス文章は大野哲也の独断で収集しています。</p>
+<h3>主な仕様</h3><p>
+　挨拶文の生成は、GPT-3.5-turboを使用しています。<br>
+　プロンプトの埋め込み（embedding）には、text-embedding-3-smallを使用しています。<br>
+　関数はGoogle Cloud Functions上でOpenAI API を使用して作られています。<br>
+　コードはnode.js 18で書いています。<br>
+　エッセンス文章は大野哲也の独断で収集しています。<br>
+　エッセンス文書の埋め込み生成はada-002を使用しており、その機能はこのプロジェクトに含まれません。</p>
 
 <h2>aisatsu関数の使い方</h2>
-<h3>OpenAI APIの準備</h3>
+<h3>OpenAI APIに関する免責事項</h3>
+　<p>このプロジェクトのAPIは大野哲也の個人アカウントのものを使用しており、API課金の支払いは大野哲也が行っています。<br>
+　このアカウントには支払い金額の上限が設定されているため、上限を超えた場合、一時的に使用できなくなる場合があります。</p>
+<h3>この関数のパラメーター</h3>
+　<p>関数のURL　<code>https://us-central1-urinri2023.cloudfunctions.net/aisatsu</code><br>
+　エントリポイント　<var>gogpt</var><br>
+  <table>
+   <caption>引数一覧</caption>
+   <tr><th>変数の内容</th><th>説　明</th><th>形式</th></tr>
+   <tr><td>挨拶する人の立場</td><td>普通名詞で表現されるような一般的な内容<br>特殊な内容は補足事項で補足する。</td><td>文字列形式</td></tr>
+   <tr><td>挨拶の場面</td><td>普通名詞で表現されるような一般的な内容<br>特殊な内容は補足事項で補足する。</td><td>文字列形式</td></tr>
+  </table>
+　この関数は認証なしで使用できます。<br>
+　コードの記述例<br>
+  <code></code></p>
+<h2>独自環境への導入</h2>
+　このコードをご自分の環境で構築・デプロイすることで、エッセンス文章ファイルやプロンプトの生成プロセス、生成エンジンをカスタマイズできます。
+<h3>OpenAI APIの準備</h3><p>
+　OpenAI APIキーが準備出来ている場合は飛ばしてください。<br>　OpenAI APIキーがない場合、または新規に追加する場合は、<a href="https://platform.openai.com/signup">OpenAI アカウント</a>を作成するか、<a href="https://platform.openai.com/login">サインイン</a>します。<br>
+　次に、<a href="https://platform.openai.com/account/api-keys">API キー ページ</a>に移動し、「新しい秘密キーを作成」し、必要に応じてキーに名前を付けます。<strong>※キーは一度しか表示されません。</strong><br>
+　これを安全な場所に保存し、誰とも共有しないようにします。</p>
+<h3>Node.jsのセットアップ</h3>
+<h4>Node.jsをインストールする</h4>
+　Node.jsがインストールされていなければ、<a href="https://nodejs.org/en/download">Node の公式 Web サイト</a>にアクセスし、LTS バージョンをダウンロードしてからインストールします。<br>
+　<a href="https://nodejs.org/api/synopsis.html#usage">公式のNode.js使用ガイド</a>も参考にしてください。
+<h4>Node.js　バージョンの確認とアップデート</h4>
+  <p>Node.jsのバージョンを確認するにはターミナルで　<code>node --version</code>　または　<code>node -v</code>　を実行します。<br>
+  Node.jsがインストールされていれば　<samp>v18.16.0</samp>　などと表示されます。<br>
+  ちなみにNode.jsのパッケージを管理する「npm」も同様に確認できます<br>
+  <code>npm --version<br>9.5.1</code><br>
+  このプロジェクトではv18.16.0を使用しています。他のバージョンでの確認はしていません。<small>Node.jsのバージョン管理方法はいくつかあります。</small></p>
+<h4>OpenAI Node.js ライブラリをインストールする</h4>
+  <p>Node.js をインストールしたら、OpenAI Node.js ライブラリをインストールできます。ターミナル/コマンドラインから、次を実行します。<br>
+  <code>npm install --save openai</code></p>
+<h3>APIキーを設定する</h3><p>
+　このプロジェクトでは、.envを使用しています。Node.js 18では<a href="https://www.npmjs.com/package/dotenv">dotenv</a>を使用する方法が一般的です。<br>
+　ローカル環境（WindowsまたはMac）で使用する場合は、<a href="https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key">OSの環境変数を使用する方法</a>もあります。</p>
