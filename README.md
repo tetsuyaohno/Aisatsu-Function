@@ -61,12 +61,35 @@
   <table>
    <caption>引数一覧</caption>
    <tr><th>変数の内容</th><th>説　明</th><th>形式</th></tr>
-   <tr><td>挨拶する人の立場</td><td>普通名詞で表現されるような一般的な内容<br>特殊な内容は補足事項で補足する。</td><td>文字列形式</td></tr>
-   <tr><td>挨拶の場面</td><td>普通名詞で表現されるような一般的な内容<br>特殊な内容は補足事項で補足する。</td><td>文字列形式</td></tr>
+   <tr><td>挨拶する人の立場<strong>(必須）</strong></td><td>自治会長やPTA会長など挨拶する人の立場を入力<br>一般的な内容を記述し、特殊な内容は補足事項に記述する。</td><td>文字列形式</td></tr>
+   <tr><td>挨拶の場面<strong>(必須）</strong></td><td>盆踊り大会や清掃活動の始めなど、挨拶を行う場面（具体的な方がよい）を入力<br>特殊な内容は補足事項に記述する。</td><td>文字列形式</td></tr>
+   <tr><td>注文事項<strong>（省略可）</strong></td><td>飲食を勧める、感謝の気持ちを伝える、など盛り込みたい内容を記入。<br>
+    挨拶文の文字数は500字程度に指定しているため、改めて別の文字数を指定した場合、反映されない可能性がある</td><td>文字列形式</td></tr>
+   <tr><td>補足事項<strong>（省略可）</strong></td><td>10周年記念や無形文化財に指定されているなど、参考となる情報があれば記入。<br>
+立場・役職、場面・行事が一般的でない場合やAIが理解できていないと思われる場合は、ここで説明する。</td><td>文字列形式</td></tr>
   </table>
 　この関数は認証なしで使用できます。<br>
 　コードの記述例<br>
-  <code></code></p>
+  <pre><code>
+   /*******************************************************************
+   * postメソッドで外部関数を実行
+   * tachiba = 立場,　bamen = 場面,　chumon = 注文事項,　hosoku = 補足内容　
+   */
+    const body = {tachiba: tachiba, bamen: bamen, chumon: chumon, hosoku: hosoku};
+    //関数のURL
+    const url= 'https://us-central1-urinri2023.cloudfunctions.net/aisatsu';
+    
+    //+++++++++　フェッチコマンドで外部関数実行　++++++++++
+    fetch(url,{
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body)
+    });
+  </code></pre><br>
+  JavaScriptコード全体<br>このコードを利用するためのHTML</p>
 <h2>独自環境への導入</h2>
 　このコードをご自分の環境で構築・デプロイすることで、エッセンス文章ファイルやプロンプトの生成プロセス、生成エンジンをカスタマイズできます。
 <h3>OpenAI APIの準備</h3><p>
