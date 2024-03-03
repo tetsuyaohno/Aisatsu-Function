@@ -73,8 +73,8 @@
   <pre><code>
    /*******************************************************************
    * postメソッドで外部関数を実行
-   * tachiba = 立場,　bamen = 場面,　chumon = 注文事項,　hosoku = 補足内容　
-   */
+   * tachiba = 立場,　bamen = 場面,　chumon = 注文事項,　hosoku = 補足内容 */
+    //必要事項をJSON形式で作成
     const body = {tachiba: tachiba, bamen: bamen, chumon: chumon, hosoku: hosoku};
     //関数のURL
     const url= 'https://us-central1-urinri2023.cloudfunctions.net/aisatsu';
@@ -89,7 +89,10 @@
       body: JSON.stringify(body)
     });
   </code></pre><br>
-  JavaScriptコード全体<br>このコードを利用するためのHTML</p>
+  <a href="https://github.com/tetsuyaohno/Aisatsu-Public/blob/master/jikkou.js">コードの記述例全体　JavaScript</a>
+  <a href="https://github.com/tetsuyaohno/Aisatsu-Public/blob/master/index.html">サンプルHTML</a><br>
+  以下のページで実際にあいさつアシスタントを試すことが出来ます。<br>
+  <a href="https://github.com/tetsuyaohno/Aisatsu-Public">あいさつアシスタントサンプル(Aisatsu-Public)</a></p>
 <h2>独自環境への導入</h2>
 　このコードをご自分の環境で構築・デプロイすることで、エッセンス文章ファイルやプロンプトの生成プロセス、生成エンジンをカスタマイズできます。
 <h3>OpenAI APIの準備</h3><p>
