@@ -121,18 +121,64 @@
   Google Cloud FunctionsがサポートしているNode.jsランタイムのバージョンは<a href="https://cloud.google.com/functions/docs/concepts/nodejs-runtime?hl=ja">こちらから</a>確認できます。</p>
 <h3>サンプルコードを取得</h3>
 ローカルマシンにリポジトリのクローンを作成します。<br>
-<code>git clone </code>
+<code>git clone https://github.com/tetsuyaohno/Aisatsu-Function.git</code><br>Cloud Functions のサンプルコードが含まれているディレクトリに移動します。<code>cd Aisatsu-Function</code><br>
+<code>dir</code>コマンドでファイルが揃っているか確認する。<br>
+<code><pre>
+ Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---          2024/01/29     7:54        1124994 aisatsu.json
+-a---          2024/03/02    13:44           5314 gptmod.js
+-a---          2024/03/01    12:21           2105 index.js
+-a---          2024/03/01    13:45           1212 LICENSE.txt
+-a---          2023/06/17    16:01         230396 package-lock.json
+-a---          2023/06/17    16:01            649 package.json
+</pre></code>
 <h3>クライアント ライブラリをインストール</h3>
-
-
+<h4>サンプルのpackage.jsonを利用</h4>
+<code>npm install</code>コマンドを実行：関数のディレクトリ内、引数なし。<br>
+これでパッケージとそのパッケージが依存するすべてのパッケージがインストールされます。<br>
+説明：外部モジュールを含む、Node.js における依存関係は、npm で管理され、package.json というメタデータ ファイルで表現されます。<br>サンプルのpackage.json<code><pre>
+ {
+  "name": "aisatsu",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "dotenv": "^16.1.4",
+    "firebase-admin": "^11.8.0",
+    "firebase-functions": "^4.4.1",
+    "googleapis": "^118.0.0",
+    "openai": "^3.2.1",
+    "yaml": "^2.3.1"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  },
+  "private": true
+}
+</pre></code>
+<code>"openai": "^3.2.1",</code>とあるように、このファイルを利用すればOpenAIのAPIライブラリも一緒にインストールされます。<br>
+<h4>個別にOpenAI APIライブラリをインストールする</h4>
+  <p>Node.js をインストールしたら、OpenAI Node.js ライブラリをインストールできます。ターミナル/コマンドラインから、次を実行します。<br>
+  <code>npm install --save openai</code></p>
 <h3>OpenAI APIの準備</h3><p>
 　OpenAI APIキーが準備出来ている場合は飛ばしてください。<br>　OpenAI APIキーがない場合、または新規に追加する場合は、<a href="https://platform.openai.com/signup">OpenAI アカウント</a>を作成するか、<a href="https://platform.openai.com/login">サインイン</a>します。<br>
 　次に、<a href="https://platform.openai.com/account/api-keys">API キー ページ</a>に移動し、「新しい秘密キーを作成」し、必要に応じてキーに名前を付けます。<strong>※キーは一度しか表示されません。</strong><br>
 　これを安全な場所に保存し、誰とも共有しないようにします。</p>
-<h4>OpenAI Node.js ライブラリをインストールする</h4>
-  <p>Node.js をインストールしたら、OpenAI Node.js ライブラリをインストールできます。ターミナル/コマンドラインから、次を実行します。<br>
-  <code>npm install --save openai</code></p>
 <h3>APIキーを設定する</h3><p>
 　このプロジェクトでは、.envを使用しています。Node.js 18では<a href="https://www.npmjs.com/package/dotenv">dotenv</a>を使用する方法が一般的です。<br>
 　ローカル環境（WindowsまたはMac）で使用する場合は、<a href="https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key">OSの環境変数を使用する方法</a>もあります。</p>
-
+ <h3>関数のデプロイ</h3>
+ 関数のディレクトリで次のコマンドを実行します。<br>
+ <code>  gcloud functions deploy aisatsu --runtime nodejs18 --trigger-http --allow-unauthenticated --entry-point gogpt --timeout 180</code><br>
+　関数がデプロイされたら、uri プロパティをメモするか、Cloud Functions のコンソールで確認します。<br>
+ <a href="https://github.com/tetsuyaohno/Aisatsu-Public">あいさつアシスタントサンプル(Aisatsu-Publicリポジトリ)</a>をダウンロードし、JavaScriptファイル<a>jikkou.js</a>urlを書き換えるなどして動作確認が出来ます。
