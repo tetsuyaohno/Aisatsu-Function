@@ -168,7 +168,7 @@
 </pre></code>
 <code>"openai": "^3.2.1",</code>とあるように、このファイルを利用すればOpenAIのAPIライブラリも一緒にインストールされます。<br>
 <h4>個別にOpenAI APIライブラリをインストールする</h4>
-  <p>Node.js をインストールしたら、OpenAI Node.js ライブラリをインストールできます。ターミナル/コマンドラインから、次を実行します。<br>
+  <p>個別にOpenAI Node.js ライブラリをインストールする場合は、ターミナル/コマンドラインから、次を実行します。<br>
   <code>npm install --save openai</code></p>
 <h3>OpenAI APIの準備</h3><p>
 　OpenAI APIキーが準備出来ている場合は飛ばしてください。<br>　OpenAI APIキーがない場合、または新規に追加する場合は、<a href="https://platform.openai.com/signup">OpenAI アカウント</a>を作成するか、<a href="https://platform.openai.com/login">サインイン</a>します。<br>
@@ -182,3 +182,47 @@
  <code>  gcloud functions deploy aisatsu --runtime nodejs18 --trigger-http --allow-unauthenticated --entry-point gogpt --timeout 180</code><br>
 　関数がデプロイされたら、uri プロパティをメモするか、Cloud Functions のコンソールで確認します。<br>
  <a href="https://github.com/tetsuyaohno/Aisatsu-Public">あいさつアシスタントサンプル(Aisatsu-Publicリポジトリ)</a>をダウンロードし、JavaScriptファイル<a>jikkou.js</a>urlを書き換えるなどして動作確認が出来ます。
+<h2>カスタマイズのポイント</h2>
+関数本体はgptmod.jsに記述されています。<br>
+<h3>問い合わせ文章（フューショットプロンプト）カスタマイズ</h3>
+問い合わせ文章はFunction chatGptに記述されており、ここで各入力パラメーターを組み合わせて文章にしている。この関数がindex.jsとのやり取りを行っている。<br>
+この記述を変えることで問い合わせ文章（プロンプト）の形式が変えられる。<br>
+現状では"role":"assistant"の部分がフューショットの部分となっている。<br>
+<code><pre>
+ //ユーザーからの質問文を組み立てる
+ const input = query.bamen + 'で使用するあいさつ文を以下の条件で考えて下さい。 条件: 500字程度 ' + query.chumon;
+    const relevanceList = await getRelevanceList(chishikiVector, input);
+    //Chat-GPTへの問い合わせ内容を作る
+    const sys = 'あなたは、' + query.tachiba + 'としてロールプレイをします。';
+    //配列relevanceListに選抜されたエッセンス文章が格納されている。
+    const mes =[
+      {"role":"system", "content":sys},
+      {"role":"assistant", "content":relevanceList[0]},
+      {"role":"assistant", "content":relevanceList[1]},
+      {"role":"assistant", "content":relevanceList[2]},
+      {"role":"user", "content":input}
+    ];
+</pre></code>
+<h3>挨拶文生成engineの指定</h3>
+あいさつ文生成エンジンの指定はfunction createCompletionに記述されている。<br>
+ここのパラメーターを変えると、生成エンジンやその挙動が変更できる。<br>
+APIの場合はplusに加入していなくてもGpt4.0が使える、ただしお高い。<br>
+<code><pre>
+ {
+   model: "gpt-3.5-turbo",//GTP3.5を使用している、gpt-4.0にすればGPT4.0になる。
+   messages: prompt,//問い合わせ文章全体
+   max_tokens: 2000,//あいさつ文の最長
+   temperature: 0.4//ゆらぎ=0に近いほど正確
+ }
+</pre></code>
+<h3>比較元文章の埋め込み生成エンジン</h3>
+フューショットプロンプティングで送る、エッセンス文章を選抜する基になる埋め込み文章を生成するエンジンは、Function createEmbeddingに記述されている。<br>
+<code><pre>
+ {
+   model: 'text-embedding-3-small',
+           input //引数：ユーザーからの質問（場面と注文事項を足し合わせた内容）
+ }
+</pre></code>
+<h3>エッセンス文章の選抜</h3>
+エッセンス文章の選抜はFunction getRelevanceListで行われており、関連の高い物から3つを配列にして返している。<br>
+選抜の計算には<a href="https://rikeilabo.com/vector-dot-product">内積の和</a>を利用しているが、どの式を使うかはあまり重要でないらしい。
