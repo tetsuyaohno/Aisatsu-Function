@@ -49,7 +49,7 @@
 　この関数は、標準的な HTTP リクエストから呼び出されるHTTP 関数であり、<a href="https://cloud.google.com/functions/docs/concepts/overview?hl=ja">Google Cloud Functions</a>上で<a href= "https://platform.openai.com/docs/overview">OpenAI API</a> を使用して動作します。<br>
 　コードはnode.jsで書いています。<br>
 　エッセンス文章は大野哲也の独断で収集しています。<br>
-　エッセンス文書の埋め込み生成はada-002を使用しており、その機能はこのプロジェクトに含まれません。</p>
+　エッセンス文書の埋め込み（aisatsu.json）生成はada-002を使用しており、その機能はこのプロジェクトに含まれません。</p>
 
 <h2>aisatsu関数の使い方</h2>
 <h3>OpenAI APIに関する免責事項</h3>
