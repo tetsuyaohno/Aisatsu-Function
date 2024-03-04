@@ -55,9 +55,11 @@
 <h3>OpenAI APIに関する免責事項</h3>
 　<p>このプロジェクトのAPIは大野哲也の個人アカウントのものを使用しており、API課金の支払いは大野哲也が行っています。<br>
 　このアカウントには支払い金額の上限が設定されているため、上限を超えた場合、一時的に使用できなくなる場合があります。</p>
-<h3>この関数のパラメーター</h3>
-　<p>関数のURL　<code>https://us-central1-urinri2023.cloudfunctions.net/aisatsu</code><br>
-　エントリポイント　<var>gogpt</var><br>
+<h3>関数のURL</h3>
+　　<code>https://us-central1-urinri2023.cloudfunctions.net/aisatsu</code>
+<h3>エントリポイント</h3><var>gogpt</var>
+<h3>関数パラメーター</h3>
+<strong>※この関数は認証なしで使用できます。</strong><br>
   <table>
    <caption>引数一覧</caption>
    <tr><th>変数の内容</th><th>説　明</th><th>形式</th></tr>
@@ -68,8 +70,9 @@
    <tr><td>補足事項<strong>（省略可）</strong></td><td>10周年記念や無形文化財に指定されているなど、参考となる情報があれば記入。<br>
 立場・役職、場面・行事が一般的でない場合やAIが理解できていないと思われる場合は、ここで説明する。</td><td>文字列形式</td></tr>
   </table>
-　この関数は認証なしで使用できます。<br>
-　コードの記述例<br>
+　
+<h3>コードの記述例</h3>
+<a href="https://github.com/tetsuyaohno/Aisatsu-Public">Aisatsu-publicリポジトリ</a>内の<a href="https://github.com/tetsuyaohno/Aisatsu-Public/blob/master/jikkou.js">jikkou.js</a>ファイルより抜粋
   <pre><code>
    /*******************************************************************
    * postメソッドで外部関数を実行
@@ -78,7 +81,6 @@
     const body = {tachiba: tachiba, bamen: bamen, chumon: chumon, hosoku: hosoku};
     //関数のURL
     const url= 'https://us-central1-urinri2023.cloudfunctions.net/aisatsu';
-    
     //+++++++++　フェッチコマンドで外部関数実行　++++++++++
     fetch(url,{
       method: "POST",
@@ -88,11 +90,10 @@
       },
       body: JSON.stringify(body)
     });
-  </code></pre><br>
-  <a href="https://github.com/tetsuyaohno/Aisatsu-Public/blob/master/jikkou.js">コードの記述例全体　JavaScript</a>
-  <a href="https://github.com/tetsuyaohno/Aisatsu-Public/blob/master/index.html">サンプルHTML</a><br>
+  </code></pre>
+ <h3>試してみる</h3>
   以下のページで実際にあいさつアシスタントを試すことが出来ます。<br>
-  <a href="https://github.com/tetsuyaohno/Aisatsu-Public">あいさつアシスタントサンプル(Aisatsu-Public)</a></p>
+  <a href="https://github.com/tetsuyaohno/Aisatsu-Public">あいさつアシスタントサンプル(Aisatsu-Publicリポジトリ)</a><hr>
 <h2>独自環境への導入</h2>
 　このコードをご自分の環境で構築・デプロイすることで、エッセンス文章ファイルやプロンプトの生成プロセス、生成エンジンをカスタマイズできます。
 <h3>OpenAI APIの準備</h3><p>
@@ -115,3 +116,4 @@
 <h3>APIキーを設定する</h3><p>
 　このプロジェクトでは、.envを使用しています。Node.js 18では<a href="https://www.npmjs.com/package/dotenv">dotenv</a>を使用する方法が一般的です。<br>
 　ローカル環境（WindowsまたはMac）で使用する場合は、<a href="https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key">OSの環境変数を使用する方法</a>もあります。</p>
+
