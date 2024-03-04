@@ -46,8 +46,8 @@
 <h3>主な仕様</h3><p>
 　挨拶文の生成は、GPT-3.5-turboを使用しています。<br>
 　プロンプトの埋め込み（embedding）には、text-embedding-3-smallを使用しています。<br>
-　関数はGoogle Cloud Functions上でOpenAI API を使用して作られています。<br>
-　コードはnode.js 18で書いています。<br>
+　この関数は、標準的な HTTP リクエストから呼び出されるHTTP 関数であり、<a href="https://cloud.google.com/functions/docs/concepts/overview?hl=ja">Google Cloud Functions</a>上で<a href= "https://platform.openai.com/docs/overview">OpenAI API</a> を使用して動作します。<br>
+　コードはnode.jsで書いています。<br>
 　エッセンス文章は大野哲也の独断で収集しています。<br>
 　エッセンス文書の埋め込み生成はada-002を使用しており、その機能はこのプロジェクトに含まれません。</p>
 
@@ -96,20 +96,39 @@
   <a href="https://github.com/tetsuyaohno/Aisatsu-Public">あいさつアシスタントサンプル(Aisatsu-Publicリポジトリ)</a><hr>
 <h2>独自環境への導入</h2>
 　このコードをご自分の環境で構築・デプロイすることで、エッセンス文章ファイルやプロンプトの生成プロセス、生成エンジンをカスタマイズできます。
+<h3>準備</h3>
+<ol>
+  <li>Google Cloud Console の [プロジェクト セレクタ] ページで、Google Cloud <a herf="https://cloud.google.com/resource-manager/docs/creating-managing-projects?hl=ja">プロジェクトを選択または作成</a>します。<br>
+  <small>注: この手順で作成するリソースをそのまま保持する予定でない場合、既存のプロジェクトを選択するのではなく、新しいプロジェクトを作成してください。<br>
+   チュートリアルの終了後にそのプロジェクトを削除すれば、プロジェクトに関連するすべてのリソースを削除できます。</small></li>
+  <li>Google Cloud プロジェクトで課金が有効になっていることを確認します。</li>
+  <li><strong>API を有効にします</strong>「Cloud Functions、Cloud Build、Artifact Registry、Cloud Run、and Cloud Logging」 。</li>
+  <li><a href="https://cloud.google.com/sdk/docs/install?hl=ja">gcloud CLI をインストールして初期化します。</a></li>
+  <li><code>gcloud</code> コンポーネントを更新してインストールします。<br><code>gcloud components update</code></li>
+</ol>
+<h3>Node.js 開発環境のセットアップ</h3>
+<ol>
+ <li>Node Version Manager（NVM）をインストールします。</li>
+ <li>Node.js と npm（Node Package Manager）をインストールします。</li>
+ <li>エディタをインストールします。</li>
+ <li>Google Cloud CLI をインストールする</li>
+</ol>
+<a href="https://cloud.google.com/nodejs/docs/setup?hl=ja">こちらのサイトに詳細な説明があります。</a>
+<h4>Node.js　バージョンの確認</h4>
+  <p>Node.jsのバージョンを確認するにはターミナルで　<code>node --version</code>　または　<code>node -v</code>　を実行します。<br>
+  Node.jsがインストールされていれば　<samp>v18.16.0</samp>　などと表示されます。<br>
+  ちなみにNode.jsのパッケージを管理する「npm」も同様に確認できます<br><code>npm --version<br>9.5.1</code><br>
+  Google Cloud FunctionsがサポートしているNode.jsランタイムのバージョンは<a href="https://cloud.google.com/functions/docs/concepts/nodejs-runtime?hl=ja">こちらから</a>確認できます。</p>
+<h3>サンプルコードを取得</h3>
+ローカルマシンにリポジトリのクローンを作成します。<br>
+<code>git clone </code>
+<h3>クライアント ライブラリをインストール</h3>
+
+
 <h3>OpenAI APIの準備</h3><p>
 　OpenAI APIキーが準備出来ている場合は飛ばしてください。<br>　OpenAI APIキーがない場合、または新規に追加する場合は、<a href="https://platform.openai.com/signup">OpenAI アカウント</a>を作成するか、<a href="https://platform.openai.com/login">サインイン</a>します。<br>
 　次に、<a href="https://platform.openai.com/account/api-keys">API キー ページ</a>に移動し、「新しい秘密キーを作成」し、必要に応じてキーに名前を付けます。<strong>※キーは一度しか表示されません。</strong><br>
 　これを安全な場所に保存し、誰とも共有しないようにします。</p>
-<h3>Node.jsのセットアップ</h3>
-<h4>Node.jsをインストールする</h4>
-　Node.jsがインストールされていなければ、<a href="https://nodejs.org/en/download">Node の公式 Web サイト</a>にアクセスし、LTS バージョンをダウンロードしてからインストールします。<br>
-　<a href="https://nodejs.org/api/synopsis.html#usage">公式のNode.js使用ガイド</a>も参考にしてください。
-<h4>Node.js　バージョンの確認とアップデート</h4>
-  <p>Node.jsのバージョンを確認するにはターミナルで　<code>node --version</code>　または　<code>node -v</code>　を実行します。<br>
-  Node.jsがインストールされていれば　<samp>v18.16.0</samp>　などと表示されます。<br>
-  ちなみにNode.jsのパッケージを管理する「npm」も同様に確認できます<br>
-  <code>npm --version<br>9.5.1</code><br>
-  このプロジェクトではv18.16.0を使用しています。他のバージョンでの確認はしていません。<small>Node.jsのバージョン管理方法はいくつかあります。</small></p>
 <h4>OpenAI Node.js ライブラリをインストールする</h4>
   <p>Node.js をインストールしたら、OpenAI Node.js ライブラリをインストールできます。ターミナル/コマンドラインから、次を実行します。<br>
   <code>npm install --save openai</code></p>
