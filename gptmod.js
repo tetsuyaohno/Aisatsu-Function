@@ -93,7 +93,7 @@ exports.chatGpt = async function(query){
   createCompletion = async(prompt) => {
     try {
       const completion = await openai.createChatCompletion({
-          model: "gpt-3.5-turbo",
+          model: "gpt-４-turbo",
           messages: prompt,
           max_tokens: 2000,
           temperature: 0.4
