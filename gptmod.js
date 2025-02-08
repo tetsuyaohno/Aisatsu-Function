@@ -3,15 +3,20 @@ const fs = require('fs');
 const readline = require('readline');
 const functions = require('firebase-functions');
 const {google} = require('googleapis');
-const { Configuration, OpenAIApi } = require("openai");
+//const { Configuration, OpenAIApi } = require("openai");
+const OpenAIApi = require("openai");
 
 //ChatGPT起動
 //const API_KEY = process.env.GPT_API;//ChatGPT API key
 const JOUHOU_INPUT = 'aisatsu.json';//EnbeddingFile
+/*
 const configuration = new Configuration({
   apiKey: process.env.GPT_API,
 });
-const openai = new OpenAIApi(configuration);
+const openai = new OpenAIApi(configuration);*/
+const openai = new OpenAIApi({
+  apiKey: process.env.GPT_API,
+});
 
 process.env.DEBUG = 'dialogflow:*'; // enables lib debugging statements 
 /*******************************************************************************
@@ -30,7 +35,7 @@ exports.chatGpt = async function(query){
     var content = bufferC.toString();
     const chishikiVector = JSON.parse(content);
     //参考情報を選抜
-    const input = query.bamen + 'で使用するあいさつ文を以下の条件で考えて下さい。 条件: 500字程度 ' + query.chumon;//ユーザーからの質問文を組み立てる
+    const input = query.bamen + 'で使用するあいさつ文を以下の条件で考えて下さい。 条件 500字程度 ' + query.chumon;//ユーザーからの質問文を組み立てる
     const relevanceList = await getRelevanceList(chishikiVector, input);
     //Chat-GPTへの問い合わせ内容を作る
     const sys = 'あなたは、' + query.tachiba + 'としてロールプレイをします。';
@@ -55,14 +60,18 @@ exports.chatGpt = async function(query){
   */
   const createEmbedding = async(input) => {
     try {
-      const embedding = await openai.createEmbedding({
-          model: 'text-embedding-3-small',
+      const embedding = await openai.embeddings.create({
+          model: 'text-embedding-ada-002',
+          //model: 'text-embedding-3-small',
           input
         });
-      return embedding.data.data[0].embedding;
+      console.log('問い合わせ埋め込み生成');
+      return embedding.data[0].embedding;
     } catch(e) {
+      console.log('embedddngエラー発生');
       console.error(e);
-      throw e;
+      console.log('内容：' + input);
+      //throw e;
         }
   }
   /******************************************************************************************
@@ -92,13 +101,13 @@ exports.chatGpt = async function(query){
    */
   createCompletion = async(prompt) => {
     try {
-      const completion = await openai.createChatCompletion({
-          model: "gpt-3.5-turbo",
+      const completion = await openai.chat.completions.create({
+          model: "gpt-4o",
           messages: prompt,
-          max_tokens: 2000,
+          max_completion_tokens: 2000,
           temperature: 0.4
         });
-      return completion.data.choices[0].message.content;
+      return completion.choices[0].message.content;
     } catch (e) {
       console.error(e);
     }
