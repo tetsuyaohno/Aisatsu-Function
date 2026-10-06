@@ -44,7 +44,7 @@
 </ol>
 
 <h3>主な仕様</h3><p>
-　挨拶文の生成は、GPT-3.5-turboを使用しています。<br>
+　挨拶文の生成は、GPT-4.0-turboを使用しています。<br>
 　プロンプトの埋め込み（embedding）には、text-embedding-3-smallを使用しています。<br>
 　この関数は、標準的な HTTP リクエストから呼び出されるHTTP 関数であり、<a href="https://cloud.google.com/functions/docs/concepts/overview?hl=ja">Google Cloud Functions</a>上で<a href= "https://platform.openai.com/docs/overview">OpenAI API</a> を使用して動作します。<br>
 　コードはnode.jsで書いています。<br>
