@@ -1,114 +1,152 @@
 require('dotenv').config();
-const fs = require('fs');
-const readline = require('readline');
-const functions = require('firebase-functions');
-const {google} = require('googleapis');
-//const { Configuration, OpenAIApi } = require("openai");
-const OpenAIApi = require("openai");
+const fs = require('node:fs/promises');
+const path = require('node:path');
+const OpenAI = require('openai');
 
-//ChatGPT起動
-//const API_KEY = process.env.GPT_API;//ChatGPT API key
-const JOUHOU_INPUT = 'aisatsu.json';//EnbeddingFile
-/*
-const configuration = new Configuration({
-  apiKey: process.env.GPT_API,
-});
-const openai = new OpenAIApi(configuration);*/
-const openai = new OpenAIApi({
-  apiKey: process.env.GPT_API,
-});
+// ChatGPT起動
+const JOUHOU_INPUT = path.join(__dirname, 'aisatsu.json'); // EmbeddingFile
+const EMBEDDING_MODEL = 'text-embedding-3-small';
+const CHAT_MODEL = 'gpt-6.2-astra';
+const openai = new OpenAI({apiKey: process.env.GPT_API});
+let knowledgePromise;
 
-process.env.DEBUG = 'dialogflow:*'; // enables lib debugging statements 
-/*******************************************************************************
- * 　ChatGPT　Embedによるレスポンス作成　
- *   引数：query[0]=立場 query[1]=場面 query[2]=注文 query[3]=補足
- */  
-exports.chatGpt = async function(query){
-  //入力内容を取得
-  console.log('GPT起動');
-  if(query.tachiba=='' || query.bamen==''){
-    const mukou = '質問を入力してください。';
-    console.log('質問が無効');
-    return mukou;
+/**
+ * ChatGPT Embedによるレスポンス作成。
+ * @param {Object} query 立場(tachiba)、場面(bamen)、注文(chumon)、補足(hosoku)。
+ * @return {Promise<string>} 生成したあいさつ文、または入力を促すメッセージ。
+ */
+exports.chatGpt = async function(query) {
+  // 入力内容を取得
+  if (!query || typeof query.tachiba !== 'string' || !query.tachiba.trim() ||
+      typeof query.bamen !== 'string' || !query.bamen.trim()) {
+    return '質問を入力してください。';
   }
-    var bufferC = fs.readFileSync(JOUHOU_INPUT);
-    var content = bufferC.toString();
-    const chishikiVector = JSON.parse(content);
-    //参考情報を選抜
-    const input = query.bamen + 'で使用するあいさつ文を以下の条件で考えて下さい。 条件 500字程度 ' + query.chumon;//ユーザーからの質問文を組み立てる
-    const relevanceList = await getRelevanceList(chishikiVector, input);
-    //Chat-GPTへの問い合わせ内容を作る
-    const sys = 'あなたは、' + query.tachiba + 'としてロールプレイをします。';
-    const mes =[
-      {"role":"system", "content":sys},
-      {"role":"assistant", "content":relevanceList[0]},
-      {"role":"assistant", "content":relevanceList[1]},
-      {"role":"assistant", "content":relevanceList[2]},
-      {"role":"user", "content":input}
-    ];
-    if(query.hosoku){mes.push({"role":"assistant", "content":query.hosoku});}
-    console.log('情報\n'+ relevanceList[0] + '\n\n' + relevanceList[1] + '\n\n' + relevanceList[2] + '\n\n' + query.hosoku + '\n\n質問\n' + input);
-    const completion = await createCompletion(mes);
-    //const completion = 'これはテストモードです。'
-    console.log('\n回答\n' + completion);
-    return completion;
+  const chumon = typeof query.chumon === 'string' ? query.chumon.trim() : '';
+  const hosoku = typeof query.hosoku === 'string' ? query.hosoku.trim() : '';
+  // ユーザーからの質問文を組み立てる
+  const input = `${query.bamen.trim()}で使用するあいさつ文を以下の条件で考えて下さい。 条件 500字程度 ${chumon}` +
+    (hosoku ? `\n補足：${hosoku}` : '');
+  // 参考情報を選抜
+  const [chishikiVector, [inputV]] = await Promise.all([
+    getKnowledge(), createEmbeddings([input]),
+  ]);
+  const relevanceList = getRelevanceList(chishikiVector, inputV);
+  // ChatGPTへの問い合わせ内容を作る
+  const messages = [
+    {role: 'system', content: `あなたは、${query.tachiba.trim()}としてロールプレイをします。`},
+    ...relevanceList.map(text => ({role: 'assistant', content: text})),
+    {role: 'user', content: input},
+  ];
+  return createCompletion(messages);
+};
+
+/**
+ * 生成済みの参考資料ベクターを読み込み、キャッシュを共有する。
+ * 同時リクエストでも初期化は一度だけ行う。ファイル更新は再起動後に反映する。
+ * @param {void} なし。
+ * @return {Promise<Array<{text: string, vector: number[]}>>} 参考資料ベクター。
+ */
+async function getKnowledge() {
+  if (!knowledgePromise) knowledgePromise = loadKnowledge();
+  const pending = knowledgePromise;
+  try {
+    return await pending;
+  } catch (error) {
+    // ファイルの読み込み失敗後に再試行できるようにする。
+    if (knowledgePromise === pending) knowledgePromise = undefined;
+    throw error;
   }
-  /************************************************************************************
-  *　　ユーザーからの質問からembedベクトル作成 ()
-  *　引数：input＝ユーザーからの質問（場面と注文事項を足し合わせた内容）
-  *　戻り値：質問のベクトル値
-  */
-  const createEmbedding = async(input) => {
-    try {
-      const embedding = await openai.embeddings.create({
-          model: 'text-embedding-ada-002',
-          //model: 'text-embedding-3-small',
-          input
-        });
-      console.log('問い合わせ埋め込み生成');
-      return embedding.data[0].embedding;
-    } catch(e) {
-      console.log('embedddngエラー発生');
-      console.error(e);
-      console.log('内容：' + input);
-      //throw e;
-        }
+}
+
+/**
+ * スプレッドシートのaisatsuシートから外部生成されたJSONを読み込む。
+ * vectorは生成し直さず、そのまま使用する。
+ * JSON生成側でも質問文と同じtext-embedding-3-smallを使用すること。
+ * @param {void} なし。
+ * @return {Promise<Array<{text: string, vector: number[]}>>} 保存済みの参考資料。
+ */
+async function loadKnowledge() {
+  const documents = JSON.parse(await fs.readFile(JOUHOU_INPUT, 'utf8'));
+  if (!Array.isArray(documents) || documents.some(item =>
+    !item || typeof item.text !== 'string' || !item.text.trim() ||
+    !Array.isArray(item.vector) || !item.vector.length ||
+    !item.vector.every(Number.isFinite))) {
+    throw new Error('aisatsu.jsonの参考資料が不正です。');
   }
-  /******************************************************************************************
-  *　内積の合計を求めて数値を比較して上位3つを選んだ後、そのtextの配列を返す
-  *  引数：input＝ユーザーからの質問（場面と注文事項を足し合わせた内容）
-  *        chishikiVector＝参考資料ベクター
-  * 戻り値：関連性の高い参考資料上位3つが格納された配列
-  */
-  getRelevanceList = async (chishikiVector, input) => {
-    //dot 関数を定義: 二つの配列 a と b のドット積（内積）を計算する関数です。この関数は、対応する要素同士を掛け合わせ、その結果を合計します。
-    //解説：a.map((x, i) => a[i] * b[i])二つの配列 a と bに対して同じインデックス同士の値を掛けて、　
-    //reduce((m, n) => m + n)　n=a[i] * b[i]と考えた場合、m=m+nを配列の全結果に対して行う（各要素の合計になる）。
-    const dot = (a, b) => a.map((x, i) => a[i] * b[i]).reduce((m, n) => m + n);
-    const inputV = await createEmbedding(input);//質問文のベクターを求める
-    // chishikiVector内の全要素と質問文ベクトルの各内積の合計を計算し、それぞれオブジェクト名similarityに格納（実質的にはiの末尾に追加）
-    //sortでsimilarityの大きい順に並べ替えて、sliceで上位3個を取り出し、配列を文字列に置き換える。
-    return chishikiVector.map(i => {
-          return {
-            ...i,
-            similarity: dot(inputV, i.vector)
-          };
-    }).sort((a, b) => b.similarity - a.similarity).slice(0,3).map(i => i.text);
+  return documents;
+}
+
+/**
+ * ユーザーの質問からembedベクトルを作成する。
+ * @param {string[]} input 埋め込み対象の文章。
+ * @return {Promise<number[][]>} 入力順のベクトル。APIエラーは呼び出し元へ伝える。
+ */
+async function createEmbeddings(input) {
+  const response = await openai.embeddings.create({model: EMBEDDING_MODEL, input});
+  const vectors = new Array(input.length);
+  for (const item of response.data) {
+    if (!Number.isInteger(item.index) || item.index < 0 || item.index >= input.length ||
+        vectors[item.index] || !Array.isArray(item.embedding) ||
+        !item.embedding.length || !item.embedding.every(Number.isFinite)) {
+      throw new Error('埋め込みAPIの応答が不正です。');
+    }
+    vectors[item.index] = item.embedding;
   }
-  /*******************************************************************************************
-   * ChatGTPに問い合わせる
-   * 引数：prompt＝問い合わせ内容の文字列やオブジェクト（使用するmodelに合わせたもの）
-   */
-  createCompletion = async(prompt) => {
-    try {
-      const completion = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: prompt,
-          max_completion_tokens: 2000,
-          temperature: 0.4
-        });
-      return completion.choices[0].message.content;
-    } catch (e) {
-      console.error(e);
+  if (vectors.includes(undefined)) throw new Error('埋め込みAPIの応答が不足しています。');
+  return vectors;
+}
+
+/**
+ * 二つの配列のドット積（内積）を計算する。中間配列を作らずに合計する。
+ * @param {number[]} a 質問文ベクトル。
+ * @param {number[]} b 参考資料ベクトル。
+ * @return {number} 内積の合計。
+ */
+function dot(a, b) {
+  if (a.length !== b.length) throw new Error('埋め込みベクトルの次元が一致しません。');
+  let sum = 0;
+  for (let i = 0; i < a.length; i++) sum += a[i] * b[i];
+  return sum;
+}
+
+/**
+ * 内積の合計を比較して上位3つを選んだ後、そのtextの配列を返す。
+ * @param {Array<{text: string, vector: number[]}>} chishikiVector 参考資料ベクター。
+ * @param {number[]} inputV 質問文のベクトル。
+ * @return {string[]} 関連性の高い参考資料上位3つ。
+ */
+function getRelevanceList(chishikiVector, inputV) {
+  const top = [];
+  for (const item of chishikiVector) {
+    const candidate = {text: item.text, similarity: dot(inputV, item.vector)};
+    const index = top.findIndex(entry => candidate.similarity > entry.similarity);
+    if (index === -1) {
+      if (top.length < 3) top.push(candidate);
+    } else {
+      top.splice(index, 0, candidate);
+      if (top.length > 3) top.pop();
     }
   }
+  return top.map(item => item.text);
+}
+
+/**
+ * ChatGPTに問い合わせる。
+ * @param {Array<{role: string, content: string}>} messages 問い合わせ内容。
+ * @return {Promise<string>} 生成された回答。失敗や空の応答は例外として伝える。
+ */
+async function createCompletion(messages) {
+  const completion = await openai.chat.completions.create({
+    model: CHAT_MODEL,
+    messages,
+    max_completion_tokens: 2000,
+    reasoning_effort: 'low',
+  });
+  const choice = completion.choices?.[0];
+  if (choice?.finish_reason === 'length') throw new Error('回答がトークン上限に達しました。');
+  const content = choice?.message?.content;
+  if (typeof content !== 'string' || !content.trim()) {
+    throw new Error('ChatGPTから回答本文を取得できませんでした。');
+  }
+  return content;
+}

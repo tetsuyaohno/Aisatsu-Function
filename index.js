@@ -4,8 +4,7 @@
  */
 require('dotenv').config();
 const {onRequest} = require("firebase-functions/v2/https");
-const functions = require('firebase-functions');
-const logger = require("firebase-functions/logger");
+const {onInit} = require('firebase-functions/v2/core');
 const express = require('express');
 const cors = require('cors');
 
@@ -13,7 +12,15 @@ const app = express();
 // Automatically allow cross-origin requests
 app.use(cors({ origin: true }));
 
-const gptmod = require('./gptmod.js');
+let gptmod;
+/**
+ * 関数定義の解析時にはGPTモジュールを読み込まず、実行時に初期化する。
+ * @param {void} なし。
+ * @return {void} 戻り値なし。
+ */
+onInit(() => {
+  gptmod = require('./gptmod.js');
+});
 // https://firebase.google.com/docs/functions/get-started
 //
 // exports.helloWorld = onRequest((request, response) => {

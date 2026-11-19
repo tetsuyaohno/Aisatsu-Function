@@ -9,19 +9,16 @@
     "logs": "firebase functions:log"
   },
   "engines": {
-    "node": "22"
+    "node": "24"
   },
   "main": "index.js",
   "dependencies": {
     "dotenv": "^16.4.7",
-    "firebase-admin": "^13.0.2",
-    "firebase-functions": "^6.3.1",
-    "googleapis": "^144.0.0",
+    "firebase-admin": "^14.5.1",
+    "firebase-functions": "^7.3.0",
+    "googleapis": "^190.0.0",
     "openai": "^4.82.0",
     "yaml": "^2.7.0"
-  },
-  "devDependencies": {
-    "firebase-functions-test": "^3.4.0"
   },
   "private": true
 }
