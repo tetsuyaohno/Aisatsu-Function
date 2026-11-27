@@ -131,20 +131,24 @@ function getRelevanceList(chishikiVector, inputV) {
 }
 
 /**
- * ChatGPTに問い合わせる。
+ * Responses APIでChatGPTに問い合わせる。
  * @param {Array<{role: string, content: string}>} messages 問い合わせ内容。
  * @return {Promise<string>} 生成された回答。失敗や空の応答は例外として伝える。
  */
 async function createCompletion(messages) {
-  const completion = await openai.chat.completions.create({
+  const completion = await openai.responses.create({
     model: CHAT_MODEL,
-    messages,
-    max_completion_tokens: 2000,
-    reasoning_effort: 'low',
+    input: messages,
+    max_output_tokens: 2000,
+    reasoning: {effort: 'low'},
   });
-  const choice = completion.choices?.[0];
-  if (choice?.finish_reason === 'length') throw new Error('回答がトークン上限に達しました。');
-  const content = choice?.message?.content;
+  if (completion.incomplete_details?.reason === 'max_output_tokens') {
+    throw new Error('回答がトークン上限に達しました。');
+  }
+  if (completion.status !== 'completed') {
+    throw new Error('ChatGPTの回答生成が完了しませんでした。');
+  }
+  const content = completion.output_text;
   if (typeof content !== 'string' || !content.trim()) {
     throw new Error('ChatGPTから回答本文を取得できませんでした。');
   }
